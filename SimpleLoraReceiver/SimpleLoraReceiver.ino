@@ -41,24 +41,59 @@ void ledOff() {
   Serial.println("LED OFF");
 }
 
+// Returns true if idStr is exactly 10 characters long and all digits
+bool isValidUniqueId(const String& idStr) {
+  if (idStr.length() != 10) {
+    return false;
+  }
+  for (int i = 0; i < 10; i++) {
+    if (!isDigit(idStr.charAt(i))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void receiveMessages() {
   Serial.println("Waiting for incoming messages...");
   uint8_t buf[256];  // Buffer for incoming message
   size_t bufSize = sizeof(buf);
   int recvState = radio.receive(buf, bufSize);
+  Serial.print("Received message with state: ");
+  Serial.println(recvState);
+
 
   if (recvState == RADIOLIB_ERR_NONE) {
+    Serial.println("xxx: No errors");
     size_t len = radio.getPacketLength();  // Get length of received packet
+    Serial.print("xxx: length:");
+    Serial.println(len);
 
     if (len > 0 && len < bufSize) {
       buf[len] = '\0';  // Null-terminate the received data
       String receivedMessage = String((char*)buf);
       receivedMessage.trim();
       Serial.println("Received message: " + receivedMessage);
-      if (validateTempHumString(receivedMessage)) {
+
+      int sepIndex = receivedMessage.indexOf(':');
+      if (sepIndex == -1) {
+        Serial.println("Invalid format: Missing ID separator ':'");
+        return;
+      }
+
+      String uniqueId = receivedMessage.substring(0, sepIndex);
+      if (!isValidUniqueId(uniqueId)) {
+        Serial.println("Invalid unique ID");
+        return;
+      }
+      Serial.print("Unique ID: ");
+      Serial.println(uniqueId);
+
+      String tempHumStr = receivedMessage.substring(sepIndex + 1);
+      if (validateTempHumString(tempHumStr)) {
         Serial.println("Valid temperature/humidity string");
       } else {
-        Serial.println("Invalid format");
+        Serial.println("Invalid temperature/humidity format");
       }
     }
   } else if (recvState == RADIOLIB_ERR_RX_TIMEOUT) {
@@ -68,6 +103,8 @@ void receiveMessages() {
     Serial.println(recvState);
   }
 }
+
+
 
 bool validateTempHumString(const String& input) {
   // Must start with 'T'
