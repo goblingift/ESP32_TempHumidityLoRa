@@ -7,7 +7,7 @@ DHT dht(DHTTYPE);
 
 void setup() {
     Serial.begin(115200);
-    pinMode(LED_EXTERN, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.println("Starting XIAO ESP32S3 Temp and Humidity measurement!");
 
@@ -20,7 +20,14 @@ void loop() {
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
 
-    ledOn1sec();
+    ledOn();
+    delay(100);
+    ledOff();
+    delay(100);
+    ledOn();
+    delay(100);
+    ledOff();
+
     if (!dht.readTempAndHumidity(temp_hum_val)) {
         Serial.print("Humidity: ");
         Serial.print(temp_hum_val[0]);
@@ -31,9 +38,9 @@ void loop() {
     } else {
         Serial.println("Failed to get temprature and humidity value.");
     }
-    ledOff();
 
-    delay(1500);
+
+    delay(5000);
 }
 
 void ledOn() {
