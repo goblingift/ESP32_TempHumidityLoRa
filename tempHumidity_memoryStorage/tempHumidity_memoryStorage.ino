@@ -2,7 +2,7 @@
 #include "DHT.h"
 #include <string.h>
 #define DHTTYPE DHT20
-#define LED_EXTERN 1
+#define LED_BUILTIN 21
 
 DHT dht(DHTTYPE);
 
@@ -49,12 +49,12 @@ void loop() {
 }
 
 void ledOn() {
-    digitalWrite(LED_EXTERN, HIGH);
+    digitalWrite(LED_BUILTIN, LOW);
     Serial.println("LED ON");
 }
 
 void ledOff() {
-    digitalWrite(LED_EXTERN, LOW);
+    digitalWrite(LED_BUILTIN, HIGH);
     Serial.println("LED OFF");
 }
 

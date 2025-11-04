@@ -1,7 +1,7 @@
 #include "Wire.h"
 #include "DHT.h"
 #define DHTTYPE DHT20
-#define LED_EXTERN 1
+#define LED_BUILTIN 21
 
 DHT dht(DHTTYPE);
 
@@ -36,12 +36,12 @@ void loop() {
     delay(1500);
 }
 
-void ledOn1sec() {
-    digitalWrite(LED_EXTERN, HIGH);   // Turn LED on (active low)
+void ledOn() {
+    digitalWrite(LED_BUILTIN, LOW);   // Turn LED on (active low)
     Serial.println("LED ON");
 }
 
 void ledOff() {
-    digitalWrite(LED_EXTERN, LOW);   // Turn LED on (active low)
+    digitalWrite(LED_BUILTIN, HIGH);   // Turn LED on (active low)
     Serial.println("LED OFF");
 }
