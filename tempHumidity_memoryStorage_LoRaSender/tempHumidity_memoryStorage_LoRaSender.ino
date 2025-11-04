@@ -26,7 +26,8 @@ void setup() {
 
   if (status != RADIOLIB_ERR_NONE) {
     Serial.println("RadioLib init failed");
-    while (true);
+    while (true)
+      ;
   }
   Serial.println("RadioLib init success");
 
@@ -59,15 +60,17 @@ void loop() {
   ledOff();
 
   delay(1000);
-  sendDataViaLoRa(String(temp_hum_val[0], 2), String(temp_hum_val[1], 2));
-
+  sendDataViaLoRa(temp_hum_val);
 
   delay(2000);
 }
 
-void sendDataViaLoRa(String humidity, String temperature) {
-  String transmitString = "T" + temperature + "H" + humidity;
-  int state = radio.startTransmit(transmitString);
+void sendDataViaLoRa(float temp_hum_val[2]) {
+  char buf[20];
+  // Format floats directly into char buffer as "Txx.xxHyy.yy"
+  sprintf(buf, "T%.2fH%.2f", temp_hum_val[1], temp_hum_val[0]);
+
+  int state = radio.startTransmit(buf);
   if (state == RADIOLIB_ERR_NONE) {
     Serial.println("Message sent successfully!");
   } else {
@@ -75,6 +78,7 @@ void sendDataViaLoRa(String humidity, String temperature) {
     Serial.println(state);
   }
 }
+
 
 void ledOn() {
   digitalWrite(LED_BUILTIN, LOW);

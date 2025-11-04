@@ -44,17 +44,22 @@ void ledOff() {
 void receiveMessages() {
   Serial.println("Waiting for incoming messages...");
   uint8_t buf[256];  // Buffer for incoming message
-  size_t len = sizeof(buf);
-  int recvState = radio.receive(buf, len);
+  size_t bufSize = sizeof(buf);
+  int recvState = radio.receive(buf, bufSize);
 
   if (recvState == RADIOLIB_ERR_NONE) {
-    String receivedMessage = String((char*)buf);
-    receivedMessage.trim();
-    Serial.println("Received message: " + receivedMessage);
-    if (validateTempHumString(receivedMessage)) {
-      Serial.println("Valid temperature/humidity string");
-    } else {
-      Serial.println("Invalid format");
+    size_t len = radio.getPacketLength();  // Get length of received packet
+
+    if (len > 0 && len < bufSize) {
+      buf[len] = '\0';  // Null-terminate the received data
+      String receivedMessage = String((char*)buf);
+      receivedMessage.trim();
+      Serial.println("Received message: " + receivedMessage);
+      if (validateTempHumString(receivedMessage)) {
+        Serial.println("Valid temperature/humidity string");
+      } else {
+        Serial.println("Invalid format");
+      }
     }
   } else if (recvState == RADIOLIB_ERR_RX_TIMEOUT) {
     Serial.println("Receive timeout, no message.");
