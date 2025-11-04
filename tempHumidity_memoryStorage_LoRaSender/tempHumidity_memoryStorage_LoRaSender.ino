@@ -65,19 +65,34 @@ void loop() {
   delay(2000);
 }
 
+// Generates a random 10-digit numeric string
+String generateUniqueId() {
+  String id = "";
+  for (int i = 0; i < 10; i++) {
+    id += String(random(0, 10));
+  }
+  return id;
+}
+
 void sendDataViaLoRa(float temp_hum_val[2]) {
-  char buf[20];
-  // Format floats directly into char buffer as "Txx.xxHyy.yy"
-  sprintf(buf, "T%.2fH%.2f", temp_hum_val[1], temp_hum_val[0]);
+  String uniqueId = generateUniqueId();
+
+  char buf[40];
+  // Format message as "ID:Txx.xxHyy.yy"
+  sprintf(buf, "%s:T%.2fH%.2f", uniqueId.c_str(), temp_hum_val[1], temp_hum_val[0]);
 
   int state = radio.startTransmit(buf);
   if (state == RADIOLIB_ERR_NONE) {
-    Serial.println("Message sent successfully!");
+    Serial.print("Message sent successfully! ID: ");
+    Serial.print(uniqueId);
+    Serial.print(" Payload: ");
+    Serial.println(buf);
   } else {
     Serial.print("Failed to send, code: ");
     Serial.println(state);
   }
 }
+
 
 
 void ledOn() {
