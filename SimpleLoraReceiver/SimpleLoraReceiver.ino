@@ -1,7 +1,6 @@
 #include <RadioLib.h>
 
 #define LED_INTERN 21
-#define LED_EXTERN 1
 
 SX1262 radio = new Module(41, 39, 42, 40);  //support for the Wio_SX-1262 & Xiao ESP32S3 with B2B connector.
 
@@ -30,13 +29,11 @@ void loop() {
 }
 
 void ledOn() {
-  digitalWrite(LED_EXTERN, HIGH);
   digitalWrite(LED_INTERN, LOW);  // internal LED is reversed
   Serial.println("LED ON");
 }
 
 void ledOff() {
-  digitalWrite(LED_EXTERN, LOW);
   digitalWrite(LED_INTERN, HIGH);  // internal LED is reversed
   Serial.println("LED OFF");
 }
