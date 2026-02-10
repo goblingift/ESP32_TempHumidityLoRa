@@ -26,9 +26,7 @@ void setup() {
 }
 
 void loop() {
-  ledOn();
   receiveMessages();
-  ledOff();
   delay(2000);
 }
 
@@ -45,15 +43,13 @@ void ledOff() {
 }
 
 void activateRelay() {
-  digitalWrite(LED_INTERN, LOW);   // keep same behavior as your blink example
-  digitalWrite(LED_EXTERN, HIGH);
+  ledOn();
   digitalWrite(RELAY, HIGH);
   Serial.println("Relay activated!");
 }
 
 void deactivateRelay() {
-  digitalWrite(LED_INTERN, HIGH);
-  digitalWrite(LED_EXTERN, LOW);
+  ledOff();
   digitalWrite(RELAY, LOW);
   Serial.println("Relay deactivated!");
 }
