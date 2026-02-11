@@ -31,3 +31,4 @@
 *.out
 *.app
 .DS_Store
+ESP32S3_Base_MCU/secrets.h
