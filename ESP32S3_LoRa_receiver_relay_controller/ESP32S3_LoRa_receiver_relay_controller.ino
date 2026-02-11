@@ -56,39 +56,39 @@ void deactivateRelay() {
 
 void receiveMessages() {
   Serial.println("Waiting for incoming messages...");
+  
+  // NON-BLOCKING: 1 second timeout (64k * 15.625µs = ~1s)
   uint8_t buf[256];
-  size_t bufSize = sizeof(buf);
-
-  int recvState = radio.receive(buf, bufSize);
-  Serial.print("Received message with state: ");
+  int recvState = radio.receive(buf, sizeof(buf), 64000);  // timeout param!
+  
+  Serial.print("RX state: ");
   Serial.println(recvState);
-
+  
   if (recvState == RADIOLIB_ERR_NONE) {
     size_t len = radio.getPacketLength();
-    Serial.print("Packet length: ");
+    Serial.print("Packet len: ");
     Serial.println(len);
-
-    if (len > 0 && len < bufSize) {
+    
+    if (len > 0 && len < sizeof(buf)) {
       buf[len] = '\0';
-      String receivedMessage = String((char*)buf);
-      receivedMessage.trim();
-      Serial.println("Raw received message: " + receivedMessage);
-
-      // Expect exactly "FAN:ON" or "FAN:OFF"
-      if (receivedMessage.equalsIgnoreCase("FAN:ON")) {
-        Serial.println("Command recognized: FAN:ON");
+      String msg = String((char*)buf);
+      msg.trim();
+      Serial.println("Raw: " + msg);
+      
+      // Filter FAN only
+      if (!msg.startsWith("FAN:")) {
+        Serial.println("Ignored: temp/humidity");
+        return;
+      }
+      
+      if (msg.equalsIgnoreCase("FAN:ON")) {
         activateRelay();
-      } else if (receivedMessage.equalsIgnoreCase("FAN:OFF")) {
-        Serial.println("Command recognized: FAN:OFF");
+      } else if (msg.equalsIgnoreCase("FAN:OFF")) {
         deactivateRelay();
-      } else {
-        Serial.println("Unknown command format (expected FAN:ON or FAN:OFF)");
       }
     }
   } else if (recvState == RADIOLIB_ERR_RX_TIMEOUT) {
-    Serial.println("Receive timeout, no message.");
-  } else {
-    Serial.print("Receive error, code: ");
-    Serial.println(recvState);
+    Serial.println("Timeout (normal - no message)");
   }
 }
+
