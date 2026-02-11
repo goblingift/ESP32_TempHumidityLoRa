@@ -15,15 +15,36 @@ float receivedHumidity = 0.0;
 bool newData = false;
 
 BLYNK_WRITE(V3) {
-  int fanState = param.asInt();  // 0=OFF, 1=ON from Blynk
-  Serial.print("Fan command from Blynk: ");
-  Serial.println(fanState);
-
-  // TODO: Control relay via LoRa message: FAN:ON/OFF
-
-  // Sync back to confirm receipt
+  int fanState = param.asInt();
+  
+  Serial.print("=== FAN COMMAND RECEIVED ===");
+  Serial.print(" | Blynk V3: ");
+  Serial.print(fanState);
+  Serial.print(" | LoRa msg: ");
+  
+  String loraMsg = (fanState == 1) ? "FAN:ON" : "FAN:OFF";
+  Serial.println(loraMsg);
+  
+  Serial.println("Sending LoRa...");
+  
+  // BLOCKING TRANSMIT - guaranteed delivery!
+  radio.standby();  // Exit RX
+  int txState = radio.transmit(loraMsg);  // Send + wait complete!
+  
+  if (txState == RADIOLIB_ERR_NONE) {
+    Serial.println("LoRa TX SUCCESS");
+    Serial.print("Datarate: ");
+    Serial.print(radio.getDataRate());
+    Serial.println(" bps");
+  } else {
+    Serial.print("LoRa TX FAILED | Code: ");
+    Serial.println(txState);
+  }
+  
+  Serial.println("========================");
   Blynk.virtualWrite(V3, fanState);
 }
+
 
 void setup() {
   Serial.begin(115200);
