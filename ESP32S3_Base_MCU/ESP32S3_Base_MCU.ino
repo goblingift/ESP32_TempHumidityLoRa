@@ -9,40 +9,56 @@
 SX1262 radio = new Module(41, 39, 42, 40);
 
 BlynkTimer timer;
+unsigned long lastSensorTime = 0;
+unsigned long pendingFanStateTime = 0;
+int pendingFanState = -1;  // -1 = no pending
+const unsigned long FAN_DELAY_MS = 10000;
 
 float receivedTemp = 0.0;
 float receivedHumidity = 0.0;
 bool newData = false;
 
 BLYNK_WRITE(V3) {
-  int fanState = param.asInt();
-  
-  Serial.print("=== FAN COMMAND RECEIVED ===");
-  Serial.print(" | Blynk V3: ");
-  Serial.print(fanState);
-  Serial.print(" | LoRa msg: ");
-  
-  String loraMsg = (fanState == 1) ? "FAN:ON" : "FAN:OFF";
-  Serial.println(loraMsg);
-  
-  Serial.println("Sending LoRa...");
-  
-  // BLOCKING TRANSMIT - guaranteed delivery!
-  radio.standby();  // Exit RX
-  int txState = radio.transmit(loraMsg);  // Send + wait complete!
-  
-  if (txState == RADIOLIB_ERR_NONE) {
-    Serial.println("LoRa TX SUCCESS");
-    Serial.print("Datarate: ");
-    Serial.print(radio.getDataRate());
-    Serial.println(" bps");
-  } else {
-    Serial.print("LoRa TX FAILED | Code: ");
-    Serial.println(txState);
+  int newFanState = param.asInt();
+
+  if (newFanState != pendingFanState) {
+    pendingFanState = newFanState;
+    pendingFanStateTime = millis();
+    Serial.print("FAN command QUEUED: ");
+    Serial.println(newFanState ? "ON" : "OFF");
   }
-  
-  Serial.println("========================");
-  Blynk.virtualWrite(V3, fanState);
+
+  checkAndSendFanCommand();
+}
+
+void checkAndSendFanCommand() {
+  unsigned long now = millis();
+
+  // Ready to send?
+  if (pendingFanState != -1 && (now - lastSensorTime >= FAN_DELAY_MS)) {
+    Serial.print("SENDING PENDING FAN: ");
+    Serial.println(pendingFanState ? "ON" : "OFF");
+
+    String loraMsg = (pendingFanState == 1) ? "FAN:ON" : "FAN:OFF";
+
+    radio.standby();
+    int txState = radio.transmit(loraMsg);
+
+    if (txState == RADIOLIB_ERR_NONE) {
+      Serial.println("LoRa TX SUCCESS");
+    } else {
+      Serial.print("TX FAILED | Code: ");
+      Serial.println(txState);
+    }
+
+    Blynk.virtualWrite(V3, pendingFanState);
+    pendingFanState = -1;  // Clear queue
+  } else if (pendingFanState != -1) {
+    unsigned long remaining = (lastSensorTime + FAN_DELAY_MS - now) / 1000;
+    Serial.print("Waiting ");
+    Serial.print(remaining);
+    Serial.println("s for FAN command...");
+  }
 }
 
 
@@ -68,19 +84,18 @@ void setup() {
 
 void loop() {
   Blynk.run();
-
-  // Non-blocking receive check every loop
   receiveLoRaData();
 
-  // Send to Blynk if new data arrived
   if (newData) {
-    Blynk.virtualWrite(V1, receivedTemp);      // temperature
-    Blynk.virtualWrite(V2, receivedHumidity);  // relative humidity
+    Blynk.virtualWrite(V1, receivedTemp);
+    Blynk.virtualWrite(V2, receivedHumidity);
+    lastSensorTime = millis();  // ← Update here!
     Serial.printf("Sent to Blynk: T%.2f H%.2f\n", receivedTemp, receivedHumidity);
     newData = false;
   }
 
-  delay(100);  // Small delay to prevent overwhelming
+  checkAndSendFanCommand();
+  delay(100);
 }
 
 void receiveLoRaData() {
@@ -97,8 +112,12 @@ void receiveLoRaData() {
       Serial.print("LoRa received: ");
       Serial.println(msg);
 
-      // Parse "Txx.xxHyy.yy"
       parseTempHumidity(msg);
+
+      // Mark sensor data time - FAN commands delayed 10s
+      if (newData) {
+        lastSensorTime = millis();
+      }
     }
   }
 }
