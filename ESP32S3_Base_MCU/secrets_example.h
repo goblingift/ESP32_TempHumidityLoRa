@@ -1,0 +1,5 @@
+char ssid[] = "XXXXXXXXXXXXXX";      // Your WiFi name
+char pass[] = "XXXXXXXXXXXXXX";  // Your WiFi password
+#define BLYNK_TEMPLATE_ID "XXXXXXXXXXXXXX"
+#define BLYNK_TEMPLATE_NAME "XXXXXXXXXXXXXX"
+#define BLYNK_AUTH_TOKEN "XXXXXXXXXXXXXX"
